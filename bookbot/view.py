@@ -61,7 +61,13 @@ class BookDetailView(View):
     def search(cls, user_id, query):
         print(query)
         book = Book.search_book(query)
-        message = '*{}*\n{}'.format(book.title, ', '.join('_{}_'.format(a) for a in book.authors))
+        if book is None:
+            message = 'No such book found!'
+            cls.show_info(user_id, message, [])
+            StartView.show(user_id)
+        message = '*{}*({})\n'.format(book.title, book.year)
+        message += ', '.join('_{}_'.format(a) for a in book.authors)
+        message += '\nISBN: {}'.format(book.isbn)
         cls.show_info(user_id, message, create_quick_replies(cls.quick_replies))
 
 

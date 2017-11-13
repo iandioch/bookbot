@@ -79,10 +79,6 @@ def handle_message(user_id, message):
         return
     if message['type'] is MessageType.TEXT:
         print('INFO: Received message:', message['data'])
-        send_message(user_id, 'Gotcha')
-        book = Book()
-        book.title = message['data']
-        send_message(user_id, repr(book))
         view.handle_view_flow(user_id, message)
         return
     print('ERROR: Didn\'t recognise message type.', message)
