@@ -3,7 +3,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 PAT = None
-with open('config.txt', 'r') as f:
+with open('config.priv.txt', 'r') as f:
     lines = f.readlines()
     PAT = lines[0].strip()
 VERIFICATION_TOKEN = ''
