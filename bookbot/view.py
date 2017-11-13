@@ -61,7 +61,8 @@ class BookDetailView(View):
     def search(cls, user_id, query):
         print(query)
         book = Book.search_book(query)
-        cls.show_info(user_id, book.title, create_quick_replies(cls.quick_replies))
+        message = '*{}*\n{}'.format(book.title, ', '.join('_{}_'.format(a) for a in book.authors))
+        cls.show_info(user_id, message, create_quick_replies(cls.quick_replies))
 
 
 
