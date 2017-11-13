@@ -3,6 +3,9 @@ import requests
 from enum import Enum
 from flask import Flask, request
 
+import view
+from book import Book
+
 SEND_MESSAGE_URL = 'https://graph.facebook.com/v2.6/me/messages'
 
 app = Flask(__name__)
@@ -38,12 +41,14 @@ def root_postauth():
     return 'ok'
 
 
-def send_message(user_id, text):
+def send_message(user_id, text, quick_replies=[]):
+    if len(quick_replies) == 0:
+        quick_replies = None
     r = requests.post(SEND_MESSAGE_URL,
             params={'access_token':PAT},
             data=json.dumps({
                 'recipient': {'id':user_id},
-                'message': {'text': text}
+                'message': {'text': text, 'quick_replies': quick_replies } 
             }),
             headers={'Content-type': 'application/json'})
     if r.status_code != requests.codes.ok:
@@ -75,6 +80,10 @@ def handle_message(user_id, message):
     if message['type'] is MessageType.TEXT:
         print('INFO: Received message:', message['data'])
         send_message(user_id, 'Gotcha')
+        book = Book()
+        book.title = message['data']
+        send_message(user_id, repr(book))
+        view.handle_view_flow(user_id, message)
         return
     print('ERROR: Didn\'t recognise message type.', message)
 
