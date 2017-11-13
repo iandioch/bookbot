@@ -23,3 +23,10 @@ class Book:
 
     def __repr__(self) -> str:
         return json.dumps(self.__dict__)
+
+    @staticmethod
+    def search_book(query):
+        book = Book()
+        book.title = "random title"
+        book.authors = ['not a real author']
+        return book

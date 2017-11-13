@@ -1,3 +1,4 @@
+from book import Book
 from bookbot import send_message
 
 # Quick Replies
@@ -12,6 +13,13 @@ def create_quick_reply(s, payload=""):
     }
 
 
+def create_quick_replies(lst):
+    quick_reply_objs = []
+    for reply in lst:
+        quick_reply_objs.append(create_quick_reply(reply))
+    return quick_reply_objs
+
+
 class View:
     """A state within the user flow. Consists of a message,
     possibly including some Quick Replies."""
@@ -20,18 +28,20 @@ class View:
     quick_replies = []
 
     @classmethod
-    def show(cls, user_id):
-        quick_reply_objs = []
-        for reply in cls.quick_replies:
-            quick_reply_objs.append(create_quick_reply(reply))
-        send_message(user_id, cls.message, quick_reply_objs)
+    def show_info(cls, user_id, message_text, quick_reply_list):
+        send_message(user_id, message_text, quick_reply_list)
 
+    @classmethod
+    def show(cls, user_id):
+        quick_reply_objs = create_quick_replies(cls.quick_replies)
+        cls.show_info(user_id, cls.message, quick_reply_objs)
 
 
 class StartView(View):
     """The view the user sees when they first message, or
     when they send an invalid message."""
 
+    #TODO(iandioch): Show this view at first message.
     message = "Well lad wdc??"
     quick_replies = [QR_SEARCH_FOR_BOOK]
 
@@ -45,6 +55,14 @@ class BookSearchView(View):
 class BookDetailView(View):
     """A view giving details about a particular book."""
 
+    quick_replies = [QR_SEARCH_FOR_BOOK]
+
+    @classmethod
+    def search(cls, user_id, query):
+        print(query)
+        book = Book.search_book(query)
+        cls.show_info(user_id, book.title, create_quick_replies(cls.quick_replies))
+
 
 
 view_triggers = {
@@ -56,4 +74,4 @@ def handle_view_flow(user_id, message):
     if message['data'] in view_triggers:
         view_triggers[message['data']].show(user_id)
     else:
-        StartView.show(user_id)
+        BookDetailView.search(user_id, message['data'])
