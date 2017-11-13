@@ -1,6 +1,9 @@
 import json
+import requests
 from enum import Enum
 from flask import Flask, request
+
+SEND_MESSAGE_URL = 'https://graph.facebook.com/v2.6/me/messages'
 
 app = Flask(__name__)
 PAT = None
@@ -29,10 +32,22 @@ def root_postauth():
     data = parse_request_data(payload)
     for user_id, message in data:
         try:
-            handle_message(None, message)
+            handle_message(user_id, message)
         except Exception as e:
             print('ERROR:', e)
     return 'ok'
+
+
+def send_message(user_id, text):
+    r = requests.post(SEND_MESSAGE_URL,
+            params={'access_token':PAT},
+            data=json.dumps({
+                'recipient': {'id':user_id},
+                'message': {'text': text}
+            }),
+            headers={'Content-type': 'application/json'})
+    if r.status_code != requests.codes.ok:
+        print('WARNING:', r.text)
 
 
 def parse_request_data(payload):
@@ -59,6 +74,7 @@ def handle_message(user_id, message):
         return
     if message['type'] is MessageType.TEXT:
         print('INFO: Received message:', message['data'])
+        send_message(user_id, 'Gotcha')
         return
     print('ERROR: Didn\'t recognise message type.', message)
 
