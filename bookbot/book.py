@@ -3,6 +3,10 @@ import re
 import isbnlib
 
 
+# A cache to stop repeat lookups of the same data.
+isbn_to_book = {}
+
+
 class BookSource:
     """Somewhere this book can be found. Eg. A specific library, a person, or a URL."""
 
@@ -29,6 +33,8 @@ class Book:
 
     @staticmethod
     def search_book(query):
+        if query in isbn_to_book:
+            return isbn_to_book[query]
         results = isbnlib.goom(query)
         metadata = None
         if len(results) > 0:
@@ -52,4 +58,5 @@ class Book:
         if 'ISBN-13' in metadata:
             book.isbn = metadata['ISBN-13']
 
+        isbn_to_book[book.isbn] = book
         return book
