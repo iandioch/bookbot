@@ -7,16 +7,6 @@ import isbnlib
 isbn_to_book = {}
 
 
-class BookSource:
-    """Somewhere this book can be found. Eg. A specific library, a person, or a URL."""
-
-    def __init__(self):
-        pass
-
-    def is_available(self):
-        return False
-
-
 class Book:
     """An object containing data about a book."""
 
@@ -25,7 +15,6 @@ class Book:
         self.authors: List[str] = []
         self.year = '1000 A.D.'
         self.isbn = '123456789'
-        self.sources: List[BookSource] = []
         pass
 
     def __repr__(self) -> str:
