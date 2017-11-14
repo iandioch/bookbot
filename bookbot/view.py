@@ -65,7 +65,7 @@ class BookDetailView(View):
             message = 'No such book found!'
             cls.show_info(user_id, message, [])
             StartView.show(user_id)
-        message = '*{}*({})\n'.format(book.title, book.year)
+        message = '*{}* ({})\n'.format(book.title, book.year)
         message += ', '.join('_{}_'.format(a) for a in book.authors)
         message += '\nISBN: {}'.format(book.isbn)
         cls.show_info(user_id, message, create_quick_replies(cls.quick_replies))

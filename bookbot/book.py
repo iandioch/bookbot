@@ -29,11 +29,14 @@ class Book:
 
     @staticmethod
     def search_book(query):
-        isbn = isbnlib.isbn_from_words(query)
-        metadata = isbnlib.meta(isbn)
+        results = isbnlib.goom(query)
+        metadata = None
+        if len(results) > 0:
+            metadata = results[0]
         if metadata is None:
             print('WARNING: Book "{}" not found.'.format(query))
             return None
+        print(metadata)
         
         book = Book()
         if 'Title' in metadata:
