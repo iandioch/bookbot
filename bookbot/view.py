@@ -3,7 +3,7 @@ import json
 from tinydb import TinyDB, Query
 
 from book import Book
-from bookbot import send_message
+from bookbot import send_message, get_user_info
 
 
 db = TinyDB('data/users.priv.json')
@@ -76,7 +76,15 @@ class BookDetailView(View):
             StartView.show(user_id)
         message = '*{}* ({})\n'.format(book.title, book.year)
         message += ', '.join('_{}_'.format(a) for a in book.authors)
-        message += '\nISBN: {}'.format(book.isbn)
+        message += '\nISBN: `{}`'.format(book.isbn)
+
+        print('INFO: Finding owners of book', book.isbn)
+        owners = db.search(User.owns.any([book.isbn]))
+        if len(owners) > 0:
+            message += '\nThe following people own this book:'
+            for owner in owners:
+                info = get_user_info(owner['fb_id'])
+                message += '\n{} {}'.format(info['first_name'], info['last_name'])
         payload = json.dumps({'book': {'isbn':book.isbn}})
         quick_reply_objs = create_quick_replies(cls.quick_replies, payload)
         cls.show_info(user_id, message, quick_reply_objs)

@@ -7,6 +7,7 @@ import view
 from book import Book
 
 SEND_MESSAGE_URL = 'https://graph.facebook.com/v2.6/me/messages'
+USER_INFO_URL = 'https://graph.facebook.com/v2.6/'
 
 app = Flask(__name__)
 PAT = None
@@ -53,6 +54,15 @@ def send_message(user_id, text, quick_replies=[]):
             headers={'Content-type': 'application/json'})
     if r.status_code != requests.codes.ok:
         print('WARNING:', r.text)
+
+
+def get_user_info(user_id):
+    params = {'fields':'first_name, last_name', 'access_token':PAT}
+    r = requests.get(USER_INFO_URL + user_id, params=params)
+    if r.status_code != requests.codes.ok:
+        print('WARNING:', r.text)
+        return None
+    return json.loads(r.text)
 
 
 def parse_request_data(payload):
