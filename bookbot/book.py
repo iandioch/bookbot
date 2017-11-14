@@ -42,17 +42,14 @@ class Book:
         if metadata is None:
             print('WARNING: Book "{}" not found.'.format(query))
             return None
-        print(metadata)
         
         book = Book()
         if 'Title' in metadata:
             book.title = metadata['Title']
-            print(book.title)
         if 'Authors' in metadata:
             book.authors = []
             for auth in metadata['Authors']:
                 book.authors.extend(re.split(r'[;,]', auth))
-            print(book.authors)
         if 'Year' in metadata:
             book.year = metadata['Year']
         if 'ISBN-13' in metadata:

@@ -102,7 +102,6 @@ class OwnBookView(View):
 
     @staticmethod
     def show(user_id, payload):
-        print(payload)
         data = json.loads(payload)
         if 'book' not in data:
             print('ERROR: No "book" in payload.')
@@ -135,7 +134,6 @@ class MyBooksView(View):
 
     @staticmethod
     def show(user_id, payload):
-        print('viewing books of', user_id)
         users = db.search(User.fb_id == user_id)
         books = []
         if len(users) > 0:
@@ -165,8 +163,6 @@ def handle_view_flow(user_id, message):
     text = message['data']['text']
     if text in view_triggers:
         payload = None
-        print('looking for payload')
-        print(message)
         if 'quick_reply' in message['data'] and 'payload' in message['data']['quick_reply']:
             payload = message['data']['quick_reply']['payload']
         view_triggers[text].show(user_id, payload)
