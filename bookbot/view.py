@@ -13,6 +13,10 @@ User = Query()
 QR_SEARCH_FOR_BOOK = 'Search for book'
 QR_I_OWN_THIS_BOOK = 'I have a copy'
 QR_VIEW_MY_BOOKS = 'View my books'
+QR_VIEW_MORE_BOOKS = 'View more'
+
+# Number of books to show at a time when a user views all their books.
+NUM_BOOKS_IN_BATCH = 5
 
 
 def create_quick_reply(s, payload=""):
@@ -28,6 +32,14 @@ def create_quick_replies(lst, payload=""):
     for reply in lst:
         quick_reply_objs.append(create_quick_reply(reply, payload))
     return quick_reply_objs
+
+
+#TODO(iandioch): move this to book.py
+def create_book_string(book):
+    message = '*{}* ({})\n'.format(book.title, book.year)
+    message += ', '.join('_{}_'.format(a) for a in book.authors)
+    message += '\nISBN: `{}`'.format(book.isbn)
+    return message
 
 
 class View:
@@ -68,23 +80,22 @@ class BookDetailView(View):
     quick_replies = [QR_I_OWN_THIS_BOOK, QR_SEARCH_FOR_BOOK, QR_VIEW_MY_BOOKS]
 
     @classmethod
-    def search(cls, user_id, query):
+    def search(cls, user_id, query, search_other_owners=True):
         book = Book.search_book(query)
         if book is None:
             message = 'No such book found!'
             cls.show_info(user_id, message, [])
             StartView.show(user_id)
-        message = '*{}* ({})\n'.format(book.title, book.year)
-        message += ', '.join('_{}_'.format(a) for a in book.authors)
-        message += '\nISBN: `{}`'.format(book.isbn)
+        message = create_book_string(book)
 
         print('INFO: Finding owners of book', book.isbn)
-        owners = db.search(User.owns.any([book.isbn]))
-        if len(owners) > 0:
-            message += '\nThe following people own this book:'
-            for owner in owners:
-                info = get_user_info(owner['fb_id'])
-                message += '\n{} {}'.format(info['first_name'], info['last_name'])
+        if search_other_owners:
+            owners = db.search(User.owns.any([book.isbn]))
+            if len(owners) > 0:
+                message += '\nThe following people own this book:'
+                for owner in owners:
+                    info = get_user_info(owner['fb_id'])
+                    message += '\n{} {}'.format(info['first_name'], info['last_name'])
         payload = json.dumps({'book': {'isbn':book.isbn}})
         quick_reply_objs = create_quick_replies(cls.quick_replies, payload)
         cls.show_info(user_id, message, quick_reply_objs)
@@ -145,17 +156,29 @@ class MyBooksView(View):
             super(MyBooksView, MyBooksView).show(user_id)
             return
 
-        message = ''
-        for isbn in books:
+        start_num = 0
+        if payload and payload != '':
+            payload_data = json.loads(payload)
+            print(payload_data)
+            if 'start' in payload_data:
+                start_num = int(payload_data['start'])
+        for num in range(start_num, min(start_num+NUM_BOOKS_IN_BATCH, len(books))):
+            isbn = books[num]
             book = Book.search_book(isbn)
-            message += '\n*{}* (ISBN `{}`)'.format(book.title, book.isbn)
-        MyBooksView.show_info(user_id, message, create_quick_replies(MyBooksView.quick_replies))
+            message = create_book_string(book)
+            quick_reply_objs = create_quick_replies(MyBooksView.quick_replies)
+            if num < len(books) - 1:
+                json_data = json.dumps({'start': num+1})
+                obj = create_quick_reply(QR_VIEW_MORE_BOOKS, json_data)
+                quick_reply_objs.append(obj)
+            send_message(user_id, message, quick_reply_objs)
 
 
 view_triggers = {
         QR_SEARCH_FOR_BOOK: BookSearchView,
         QR_I_OWN_THIS_BOOK: OwnBookView,
         QR_VIEW_MY_BOOKS: MyBooksView,
+        QR_VIEW_MORE_BOOKS: MyBooksView,
 }
 
 
