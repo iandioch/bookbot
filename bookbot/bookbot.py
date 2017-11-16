@@ -71,6 +71,9 @@ def parse_request_data(payload):
     events = data['entry'][0]['messaging']
     for event in events:
         sender_id = event['sender']['id']
+        if 'delivery' in event:
+            print('INFO: Confirmation of deliveries of:', ', '.join(event['delivery']['mids']))
+            continue
         if 'message' not in event:
             print('ERROR: Could not parse event..', event)
             yield sender_id, None
