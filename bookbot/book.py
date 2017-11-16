@@ -27,7 +27,12 @@ class Book:
         results = isbnlib.goom(query)
         metadata = None
         if len(results) > 0:
-            metadata = results[0]
+            for result in results:
+                if result['Language'] == 'en':
+                    metadata = result
+                    break
+            if metadata is None:
+                metadata = results[0]
         if metadata is None:
             print('WARNING: Book "{}" not found.'.format(query))
             return None
