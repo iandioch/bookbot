@@ -14,7 +14,7 @@ PAT = None
 with open('config.priv.txt', 'r') as f:
     lines = f.readlines()
     PAT = lines[0].strip()
-VERIFICATION_TOKEN = ''
+VERIFICATION_TOKEN = 'cianruane_lol'
 
 MessageType = Enum('MessageType', ['TEXT', 'ERROR', 'QUICK_REPLY'])
 
@@ -26,13 +26,14 @@ def root():
         print('INFO: Verification complete')
         return request.args.get('hub.challenge', '')
     else:
-        print('WARNING: Wrong verification token.')
+        print('WARNING: Wrong verification token:', request.get('hub.verify_token', '(none)'))
         return 'Wrong verification tokey toke.'
 
 
 @app.route('/', methods=['POST'])
 def root_postauth():
     payload = request.get_data().decode('utf-8')
+    print('INFO: Received payload', payload)
     data = parse_request_data(payload)
     for user_id, message in data:
         try:
@@ -73,6 +74,7 @@ def parse_request_data(payload):
         if 'message' not in event:
             print('ERROR: Could not parse event..', event)
             yield sender_id, None
+            continue
         message = event['message']
         #TODO(iandioch): Handle attachments.
         if 'quick_reply' in message:
