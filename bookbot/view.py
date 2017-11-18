@@ -2,7 +2,7 @@ import json
 
 from tinydb import TinyDB, Query
 
-from book import Book
+from book import Book, save_books
 from bookbot import send_message, get_user_info
 
 
@@ -14,6 +14,7 @@ QR_SEARCH_FOR_BOOK = 'Search for book'
 QR_I_OWN_THIS_BOOK = 'I have a copy'
 QR_VIEW_MY_BOOKS = 'View my books'
 QR_VIEW_MORE_BOOKS = 'View more'
+QR_ADD_URL = 'Add a URL'
 
 # Number of books to show at a time when a user views all their books.
 NUM_BOOKS_IN_BATCH = 5
@@ -77,7 +78,23 @@ class BookSearchView(View):
 class BookDetailView(View):
     """A view giving details about a particular book."""
 
-    quick_replies = [QR_I_OWN_THIS_BOOK, QR_SEARCH_FOR_BOOK, QR_VIEW_MY_BOOKS]
+    quick_replies = [
+            QR_I_OWN_THIS_BOOK,
+            QR_ADD_URL,
+            QR_SEARCH_FOR_BOOK,
+            QR_VIEW_MY_BOOKS,
+    ]
+
+    @classmethod
+    def update_last_book(cls, user_id, isbn):
+        users = db.search(User.fb_id == user_id)
+        if len(users) == 0:
+            print('WARNING: No such user found for last book:', user_id)
+            return
+        user_data = users[0]
+        user_data['last_book'] = isbn
+        print(user_data)
+        db.update(user_data, User.fb_id == user_id)
 
     @classmethod
     def search(cls, user_id, query, search_other_owners=True):
@@ -99,6 +116,7 @@ class BookDetailView(View):
         payload = json.dumps({'book': {'isbn':book.isbn}})
         quick_reply_objs = create_quick_replies(cls.quick_replies, payload)
         cls.show_info(user_id, message, quick_reply_objs)
+        cls.update_last_book(user_id, book.isbn)
 
     @classmethod
     def show(user_id, payload):
@@ -174,12 +192,33 @@ class MyBooksView(View):
             send_message(user_id, message, quick_reply_objs)
 
 
+class AddURLView(View):
+    """A view for a user to add a URL to be associated with the
+    last book they were viewing."""
+
+    #TODO(iandioch): Mention the book title in this message.
+    message = 'Please enter a URL for this book!'
+    quick_replies = [QR_VIEW_MY_BOOKS, QR_SEARCH_FOR_BOOK]
+
+
+class URLAddedView(View):
+    """The view after a user adds a URL to a book."""
+
+    message = 'URL added!'
+    quick_replies = [QR_VIEW_MY_BOOKS, QR_SEARCH_FOR_BOOK]
+
+
 view_triggers = {
         QR_SEARCH_FOR_BOOK: BookSearchView,
         QR_I_OWN_THIS_BOOK: OwnBookView,
         QR_VIEW_MY_BOOKS: MyBooksView,
         QR_VIEW_MORE_BOOKS: MyBooksView,
+        QR_ADD_URL: AddURLView,
 }
+
+
+def is_url(text):
+    return len(text) > 8 and text[:4] == 'http'
 
 
 def handle_view_flow(user_id, message):
@@ -189,5 +228,22 @@ def handle_view_flow(user_id, message):
         if 'quick_reply' in message['data'] and 'payload' in message['data']['quick_reply']:
             payload = message['data']['quick_reply']['payload']
         view_triggers[text].show(user_id, payload)
+    elif is_url(text):
+        users = db.search(User.fb_id == user_id)
+        if len(users) == 0:
+            print('WARNING: No such user when adding URL:', user_id)
+            return
+        user = users[0]
+        print(user)
+        if 'last_book' not in user:
+            print('WARNING: This user tried to add URL, but had no last_book:', user_id)
+            return
+        isbn = user['last_book']
+        book = Book.search_book(isbn)
+        book.urls.append(text)
+        save_books()
+        # TODO(iandioch): Show the book the user changed or mention the book they
+        # added the URL to here.
+        URLAddedView.show(user_id)
     else:
         BookDetailView.search(user_id, text)
