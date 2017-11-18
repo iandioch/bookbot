@@ -4,7 +4,7 @@ from enum import Enum
 from flask import Flask, request
 
 import view
-from book import Book
+from book import Book, load_books
 
 SEND_MESSAGE_URL = 'https://graph.facebook.com/v2.6/me/messages'
 USER_INFO_URL = 'https://graph.facebook.com/v2.6/'
@@ -101,4 +101,5 @@ def handle_message(user_id, message):
 
 
 if __name__ == '__main__':
+    load_books()
     app.run(port=8767, debug=True)
