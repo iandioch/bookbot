@@ -2,7 +2,7 @@ import json
 
 from tinydb import TinyDB, Query
 
-from book import Book, save_books
+from book import Book, save_books, update_book
 from bookbot import send_message, get_user_info
 
 
@@ -93,7 +93,6 @@ class BookDetailView(View):
             return
         user_data = users[0]
         user_data['last_book'] = isbn
-        print(user_data)
         db.update(user_data, User.fb_id == user_id)
 
     @classmethod
@@ -113,6 +112,10 @@ class BookDetailView(View):
                 for owner in owners:
                     info = get_user_info(owner['fb_id'])
                     message += '\n{} {}'.format(info['first_name'], info['last_name'])
+        if len(book.urls) > 0:
+            message += '\nThe book is available at the following URLs:'
+            for url in book.urls:
+                message += '\n{}'.format(url)
         payload = json.dumps({'book': {'isbn':book.isbn}})
         quick_reply_objs = create_quick_replies(cls.quick_replies, payload)
         cls.show_info(user_id, message, quick_reply_objs)
@@ -177,7 +180,6 @@ class MyBooksView(View):
         start_num = 0
         if payload and payload != '':
             payload_data = json.loads(payload)
-            print(payload_data)
             if 'start' in payload_data:
                 start_num = int(payload_data['start'])
         for num in range(start_num, min(start_num+NUM_BOOKS_IN_BATCH, len(books))):
@@ -234,14 +236,14 @@ def handle_view_flow(user_id, message):
             print('WARNING: No such user when adding URL:', user_id)
             return
         user = users[0]
-        print(user)
         if 'last_book' not in user:
             print('WARNING: This user tried to add URL, but had no last_book:', user_id)
             return
         isbn = user['last_book']
+        print('INFO: Adding URL to book', isbn, text)
         book = Book.search_book(isbn)
         book.urls.append(text)
-        save_books()
+        update_book(isbn, book)
         # TODO(iandioch): Show the book the user changed or mention the book they
         # added the URL to here.
         URLAddedView.show(user_id)

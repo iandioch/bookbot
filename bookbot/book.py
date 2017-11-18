@@ -37,6 +37,7 @@ class Book:
     @staticmethod
     def search_book(query):
         if query in isbn_to_book:
+            print('INFO: Returning book from cache by ISBN.')
             return isbn_to_book[query]
         results = isbnlib.goom(query)
         metadata = None
@@ -50,6 +51,12 @@ class Book:
         if metadata is None:
             print('WARNING: Book "{}" not found.'.format(query))
             return None
+        # If a user searched by title instead of by ISBN.
+        isbn = metadata['ISBN-13']
+        if isbn in isbn_to_book:
+            print('INFO: Returning book from cache by ISBN after search.')
+            return isbn_to_book[isbn]
+        print('INFO: Returning new unseen book from search.')
         
         book = Book()
         if 'Title' in metadata:
@@ -95,3 +102,10 @@ def save_books():
         data[isbn] = isbn_to_book[isbn].__dict__
     with open(BOOK_SAVE_FILE_PATH, 'w+') as f:
         f.write(json.dumps(data))
+
+
+def update_book(isbn, book):
+    global isbn_to_book
+    print('INFO: Updating book:', repr(book))
+    isbn_to_book[isbn] = book
+    save_books()
