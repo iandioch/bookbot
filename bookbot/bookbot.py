@@ -26,7 +26,7 @@ def root():
         print('INFO: Verification complete')
         return request.args.get('hub.challenge', '')
     else:
-        print('WARNING: Wrong verification token:', request.get('hub.verify_token', '(none)'))
+        print('WARNING: Wrong verification token:', request.args.get('hub.verify_token', '(none)'))
         return 'Wrong verification tokey toke.'
 
 
