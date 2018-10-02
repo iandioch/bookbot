@@ -10,10 +10,10 @@ SEND_MESSAGE_URL = 'https://graph.facebook.com/v2.6/me/messages'
 USER_INFO_URL = 'https://graph.facebook.com/v2.6/'
 
 app = Flask(__name__)
-PAT = None
-with open('config.priv.txt', 'r') as f:
-    lines = f.readlines()
-    PAT = lines[0].strip()
+with open('config.priv.json', 'r') as f:
+    config = json.load(f)
+    PAT = config["pat"]
+    app.config['SERVER_NAME'] = config['server_name'] + ":" + str(config['server_port'])
 VERIFICATION_TOKEN = 'cianruane_lol'
 
 MessageType = Enum('MessageType', ['TEXT', 'ERROR', 'QUICK_REPLY'])
@@ -102,4 +102,4 @@ def handle_message(user_id, message):
 
 if __name__ == '__main__':
     load_books()
-    app.run(port=8767, debug=True)
+    app.run(debug=True)

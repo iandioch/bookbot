@@ -1,0 +1,5 @@
+{
+  "pat": "{page access token}",
+  "server_name": "localhost",
+  "server_port": 8767
+}
