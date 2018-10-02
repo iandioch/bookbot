@@ -1,1 +1,5 @@
 *.priv.*
+.idea
+/venv
+__pycache__
+!/config.priv.json.example
