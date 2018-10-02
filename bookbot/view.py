@@ -55,9 +55,12 @@ class View:
         send_message(user_id, message_text, quick_reply_list)
 
     @classmethod
-    def show(cls, user_id, payload=None):
+    def show(cls, user_id, payload=None, alt_message=None):
         quick_reply_objs = create_quick_replies(cls.quick_replies)
-        cls.show_info(user_id, cls.message, quick_reply_objs)
+        if alt_message:
+            cls.show_info(user_id, alt_message, quick_reply_objs)
+        else:
+            cls.show_info(user_id, cls.message, quick_reply_objs)
 
 
 class StartView(View):
@@ -154,7 +157,7 @@ class OwnBookView(View):
             user_data['owns'] = []
         user_data['owns'].append(data['book']['isbn'])
         db.update(user_data, User.fb_id == user_id)
-        super(OwnBookView, OwnBookView).show(user_id)
+        super(OwnBookView, OwnBookView).show(user_id, alt_message='"{}" marked as yours'.format(data['book']['title']))
 
 
 class MyBooksView(View):
